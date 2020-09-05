@@ -9,7 +9,7 @@ import com.pengke.paper.scanner.view.PaperRectangle
  */
 class ICropView {
     interface Proxy {
-        fun getPaper(): ImageView
+        fun getPaper(): List<ImageView>
         fun getPaperRect(): PaperRectangle
         fun getCroppedPaper(): ImageView
     }

@@ -1,11 +1,14 @@
 package com.pengke.paper.scanner.crop
 
 import android.Manifest
+import android.R.attr
+import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Environment
 import android.os.SystemClock
+import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.View
@@ -19,13 +22,12 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import org.opencv.android.Utils
-
+import org.opencv.core.CvType
 import org.opencv.core.Mat
+import org.opencv.core.Size
+import org.opencv.imgproc.Imgproc
 import java.io.File
 import java.io.FileOutputStream
-import android.provider.MediaStore
-import android.content.ContentValues
-
 
 
 const val IMAGES_DIR = "smart_scanner"
@@ -43,7 +45,48 @@ class CropPresenter(val context: Context, private val iCropView: ICropView.Proxy
         val bitmap = Bitmap.createBitmap(picture?.width() ?: 1080, picture?.height()
                 ?: 1920, Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(picture, bitmap, true)
-        iCropView.getPaper().setImageBitmap(bitmap)
+        iCropView.getPaper()[0].setImageBitmap(bitmap)
+
+        val src = Mat()
+        Utils.bitmapToMat(bitmap, src)
+
+        val grayImage: Mat
+        val cannedImage: Mat
+        val kernel: Mat = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(40.0, 40.0))
+        val dilate: Mat
+        val size = Size(src.size().width, src.size().height)
+        grayImage = Mat(size, CvType.CV_8UC4)
+        cannedImage = Mat(size, CvType.CV_8UC1)
+        dilate = Mat(size, CvType.CV_8UC1)
+
+        Imgproc.cvtColor(src, grayImage, Imgproc.COLOR_BGR2GRAY)
+        val greyBitmap=Bitmap.createBitmap(grayImage.cols(), grayImage.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(grayImage, greyBitmap)
+        iCropView.getPaper()[1].setImageBitmap(greyBitmap)
+
+        Imgproc.GaussianBlur(grayImage, grayImage, Size(5.0, 5.0), 0.0)
+        val blurBitmap=Bitmap.createBitmap(grayImage.cols(), grayImage.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(grayImage, blurBitmap)
+        iCropView.getPaper()[2].setImageBitmap(blurBitmap)
+
+        Imgproc.threshold(grayImage, grayImage, 5.0, 20.0, Imgproc.THRESH_TRIANGLE)
+        val thresBitmap=Bitmap.createBitmap(grayImage.cols(), grayImage.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(grayImage, thresBitmap)
+        iCropView.getPaper()[3].setImageBitmap(thresBitmap)
+
+        Imgproc.Canny(grayImage, cannedImage, 5.0, 20.0)
+        val cannedBitmap=Bitmap.createBitmap(cannedImage.cols(), cannedImage.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(cannedImage, cannedBitmap)
+        iCropView.getPaper()[4].setImageBitmap(cannedBitmap)
+
+        Imgproc.dilate(cannedImage, dilate, kernel)
+
+        // Don't do that at home or work it's for visualization purpose.
+
+        // Don't do that at home or work it's for visualization purpose.
+        val resultBitmap = Bitmap.createBitmap(dilate.cols(), dilate.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(dilate, resultBitmap)
+        iCropView.getPaper()[4].setImageBitmap(resultBitmap);
     }
 
     fun addImageToGallery(filePath: String, context: Context) {
@@ -79,7 +122,9 @@ class CropPresenter(val context: Context, private val iCropView: ICropView.Proxy
                     croppedBitmap = Bitmap.createBitmap(pc.width(), pc.height(), Bitmap.Config.ARGB_8888)
                     Utils.matToBitmap(pc, croppedBitmap)
                     iCropView.getCroppedPaper().setImageBitmap(croppedBitmap)
-                    iCropView.getPaper().visibility = View.GONE
+                    iCropView.getPaper().listIterator().forEach {
+                     imageView -> imageView.visibility = View.GONE
+                    }
                     iCropView.getPaperRect().visibility = View.GONE
                 }
     }

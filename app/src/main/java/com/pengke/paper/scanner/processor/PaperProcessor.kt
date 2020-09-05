@@ -67,7 +67,8 @@ private fun findContours(src: Mat): ArrayList<MatOfPoint> {
 
     val grayImage: Mat
     val cannedImage: Mat
-    val kernel: Mat = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(9.0, 9.0))
+    //point size of an edge
+    val kernel: Mat = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(40.0, 40.0))
     val dilate: Mat
     val size = Size(src.size().width, src.size().height)
     grayImage = Mat(size, CvType.CV_8UC4)
@@ -76,12 +77,12 @@ private fun findContours(src: Mat): ArrayList<MatOfPoint> {
 
     Imgproc.cvtColor(src, grayImage, Imgproc.COLOR_BGR2GRAY)
     Imgproc.GaussianBlur(grayImage, grayImage, Size(5.0, 5.0), 0.0)
-    Imgproc.threshold(grayImage, grayImage, 20.0, 255.0, Imgproc.THRESH_TRIANGLE)
-    Imgproc.Canny(grayImage, cannedImage, 75.0, 200.0)
+    Imgproc.threshold(grayImage, grayImage, 5.0, 21.0, Imgproc.THRESH_TRIANGLE)
+    Imgproc.Canny(grayImage, cannedImage, 5.0, 20.0)
     Imgproc.dilate(cannedImage, dilate, kernel)
     val contours = ArrayList<MatOfPoint>()
     val hierarchy = Mat()
-    Imgproc.findContours(dilate, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE)
+    Imgproc.findContours(cannedImage, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE)
     contours.sortByDescending { p: MatOfPoint -> Imgproc.contourArea(p) }
     hierarchy.release()
     grayImage.release()
@@ -107,7 +108,7 @@ private fun getCorners(contours: ArrayList<MatOfPoint>, size: Size): Corners? {
             //val area = Imgproc.contourArea(approx)
             val points = approx.toArray().asList()
             var convex = MatOfPoint()
-            approx.convertTo(convex, CvType.CV_32S);
+            approx.convertTo(convex, CvType.CV_32S)
             // select biggest 4 angles polygon
             if (points.size == 4 && Imgproc.isContourConvex(convex)){
                 val foundPoints = sortPoints(points)
