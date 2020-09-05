@@ -24,7 +24,7 @@ class CropActivity : BaseActivity(), ICropView.Proxy {
     }
 
     override fun getPaper(): List<ImageView> {
-        return listOf(paper, paper1, paper2, paper3, paper4)
+        return listOf(paper, paper1, paper2, paper3, paper4,paper5)
     }
 
     override fun getPaperRect(): PaperRectangle = paper_rect

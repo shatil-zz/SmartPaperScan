@@ -52,7 +52,7 @@ class CropPresenter(val context: Context, private val iCropView: ICropView.Proxy
 
         val grayImage: Mat
         val cannedImage: Mat
-        val kernel: Mat = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(40.0, 40.0))
+        val kernel: Mat = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(10.0, 10.0))
         val dilate: Mat
         val size = Size(src.size().width, src.size().height)
         grayImage = Mat(size, CvType.CV_8UC4)
@@ -69,12 +69,12 @@ class CropPresenter(val context: Context, private val iCropView: ICropView.Proxy
         Utils.matToBitmap(grayImage, blurBitmap)
         iCropView.getPaper()[2].setImageBitmap(blurBitmap)
 
-        Imgproc.threshold(grayImage, grayImage, 5.0, 20.0, Imgproc.THRESH_TRIANGLE)
+        Imgproc.threshold(grayImage, grayImage, 30.0, 255.0, Imgproc.THRESH_TRIANGLE)
         val thresBitmap=Bitmap.createBitmap(grayImage.cols(), grayImage.rows(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(grayImage, thresBitmap)
         iCropView.getPaper()[3].setImageBitmap(thresBitmap)
 
-        Imgproc.Canny(grayImage, cannedImage, 5.0, 20.0)
+        Imgproc.Canny(grayImage, cannedImage, 5.0, 10.0)
         val cannedBitmap=Bitmap.createBitmap(cannedImage.cols(), cannedImage.rows(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(cannedImage, cannedBitmap)
         iCropView.getPaper()[4].setImageBitmap(cannedBitmap)
@@ -86,7 +86,7 @@ class CropPresenter(val context: Context, private val iCropView: ICropView.Proxy
         // Don't do that at home or work it's for visualization purpose.
         val resultBitmap = Bitmap.createBitmap(dilate.cols(), dilate.rows(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(dilate, resultBitmap)
-        iCropView.getPaper()[4].setImageBitmap(resultBitmap);
+        iCropView.getPaper()[5].setImageBitmap(resultBitmap);
     }
 
     fun addImageToGallery(filePath: String, context: Context) {
