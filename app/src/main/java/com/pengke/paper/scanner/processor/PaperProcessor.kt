@@ -9,8 +9,14 @@ import org.opencv.imgproc.Imgproc
 const val TAG: String = "PaperProcessor"
 
 fun processPicture(previewFrame: Mat): Corners? {
-    val contours = findContours(previewFrame)
-    return getCorners(contours, previewFrame.size())
+    for (i in 0..5) {
+        val contours = findContours(previewFrame, (i * 10.0) + 5)
+        val points = getCorners(contours, previewFrame.size())
+        if (points != null) {
+            return points
+        }
+    }
+    return null
 }
 
 fun cropPicture(picture: Mat, pts: List<Point>): Mat {
@@ -63,7 +69,7 @@ fun enhancePicture(src: Bitmap?): Bitmap {
     return result
 }
 
-private fun findContours(src: Mat): ArrayList<MatOfPoint> {
+private fun findContours(src: Mat, thres: Double): ArrayList<MatOfPoint> {
 
     val grayImage: Mat
     val cannedImage: Mat
@@ -77,12 +83,12 @@ private fun findContours(src: Mat): ArrayList<MatOfPoint> {
 
     Imgproc.cvtColor(src, grayImage, Imgproc.COLOR_BGR2GRAY)
     Imgproc.GaussianBlur(grayImage, grayImage, Size(5.0, 5.0), 0.0)
-    Imgproc.threshold(grayImage, grayImage, 30.0, 255.0, Imgproc.THRESH_TRIANGLE)
-    Imgproc.Canny(grayImage, cannedImage, 5.0, 10.0)
+    Imgproc.threshold(grayImage, grayImage, thres, 255.0, Imgproc.THRESH_BINARY)
+    Imgproc.Canny(grayImage, cannedImage, 0.0, 50.0)
     Imgproc.dilate(cannedImage, dilate, kernel)
     val contours = ArrayList<MatOfPoint>()
     val hierarchy = Mat()
-    Imgproc.findContours(cannedImage, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE)
+    Imgproc.findContours(dilate, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE)
     contours.sortByDescending { p: MatOfPoint -> Imgproc.contourArea(p) }
     hierarchy.release()
     grayImage.release()
@@ -110,7 +116,7 @@ private fun getCorners(contours: ArrayList<MatOfPoint>, size: Size): Corners? {
             var convex = MatOfPoint()
             approx.convertTo(convex, CvType.CV_32S)
             // select biggest 4 angles polygon
-            if (points.size == 4 && Imgproc.isContourConvex(convex)){
+            if (points.size == 4 && Imgproc.isContourConvex(convex)) {
                 val foundPoints = sortPoints(points)
                 return Corners(foundPoints, size)
             }

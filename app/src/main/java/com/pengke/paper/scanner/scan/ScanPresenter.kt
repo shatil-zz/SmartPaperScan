@@ -161,7 +161,9 @@ class ScanPresenter constructor(private val context: Context, private val iView:
                             pictureSize?.height?.toDouble() ?: 1080.toDouble()), CvType.CV_8U)
                     mat.put(0, 0, p0)
                     val pic = Imgcodecs.imdecode(mat, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
-                    Core.rotate(pic, pic, Core.ROTATE_90_CLOCKWISE)
+                    if(pic.height()<pic.width()) {
+                        Core.rotate(pic, pic, Core.ROTATE_90_CLOCKWISE)
+                    }
                     mat.release()
                     SourceManager.corners = processPicture(pic)
                     Imgproc.cvtColor(pic, pic, Imgproc.COLOR_RGB2BGRA)
